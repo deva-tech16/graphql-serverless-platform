@@ -27,6 +27,10 @@ resource "aws_iam_role_policy" "sam_execution" {
     Statement = [
       {
         Effect = "Allow"
+        Action = ["cloudformation:CreateChangeSet"]
+      Resource = "arn:aws:cloudformation:us-east-1:aws:transform/Serverless-2016-10-31" },
+      {
+        Effect = "Allow"
         Action = [
           "lambda:CreateFunction", "lambda:DeleteFunction", "lambda:GetFunction",
           "lambda:GetFunctionConfiguration", "lambda:UpdateFunctionConfiguration", "lambda:UpdateFunctionCode",
@@ -143,7 +147,7 @@ resource "aws_iam_role_policy" "github_release" {
         Action = [
           "cloudformation:CreateChangeSet", "cloudformation:DescribeChangeSet", "cloudformation:ExecuteChangeSet",
           "cloudformation:DeleteChangeSet", "cloudformation:DescribeStacks", "cloudformation:GetTemplate",
-          "cloudformation:DescribeStackEvents"
+          "cloudformation:GetTemplateSummary", "cloudformation:DescribeStackEvents"
         ]
         Resource = [local.sam_stack, "arn:aws:cloudformation:us-east-1:aws:transform/Serverless-2016-10-31"]
       },
