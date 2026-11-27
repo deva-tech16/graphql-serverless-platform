@@ -143,7 +143,7 @@ resource "aws_iam_role_policy" "github_release" {
         Action = [
           "cloudformation:CreateChangeSet", "cloudformation:DescribeChangeSet", "cloudformation:ExecuteChangeSet",
           "cloudformation:DeleteChangeSet", "cloudformation:DescribeStacks", "cloudformation:GetTemplate",
-          "cloudformation:DescribeStackEvents"
+          "cloudformation:GetTemplateSummary", "cloudformation:DescribeStackEvents"
         ]
         Resource = [local.sam_stack, "arn:aws:cloudformation:us-east-1:aws:transform/Serverless-2016-10-31"]
       },
