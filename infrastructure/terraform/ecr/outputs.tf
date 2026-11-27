@@ -1,0 +1,1 @@
+output "repository_url" { value = aws_ecr_repository.gql.repository_url }
