@@ -14,8 +14,10 @@ export async function getPool(): Promise<Pool> {
     user: s.username,
     password: s.password,
     database: s.database,
-    ssl: { rejectUnauthorized: false }, // TLS to RDS Proxy; see security.md for CA pinning
+    ssl: { rejectUnauthorized: true },
     max: 1,
+    connectionTimeoutMillis: 5000,
   });
+  pool.on("error", (error) => console.error("Idle PostgreSQL connection failed", error.name));
   return pool;
 }

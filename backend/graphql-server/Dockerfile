@@ -11,6 +11,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY package*.json ./
 RUN npm ci --omit=dev
+COPY certs ./certs
 COPY --from=build /app/dist ./dist
 USER node
 EXPOSE 4000

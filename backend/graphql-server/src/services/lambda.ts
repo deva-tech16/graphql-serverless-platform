@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 
 const client = new LambdaClient({
@@ -25,12 +26,8 @@ export async function callLambda<T = unknown>(
   }));
 
   if (res.FunctionError) {
-    const body = res.Payload
-      ? JSON.parse(Buffer.from(res.Payload).toString())
-      : {};
-    throw new Error(
-      `Lambda ${FunctionName} failed: ${body.errorMessage ?? res.FunctionError}`
-    );
+    console.error("Lambda invocation failed", FunctionName, res.FunctionError);
+    throw new GraphQLError("The requested operation failed");
   }
 
   if (!res.Payload) return undefined as T;

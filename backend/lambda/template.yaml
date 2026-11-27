@@ -22,11 +22,13 @@ Globals:
     MemorySize: 256
     Timeout: 15
     AutoPublishAlias: live
+    ReservedConcurrentExecutions: 4
     VpcConfig:
       SubnetIds: [!Ref SubnetA, !Ref SubnetB]
       SecurityGroupIds: [!Ref LambdaSgId]
     Environment:
       Variables:
+        NODE_EXTRA_CA_CERTS: /var/runtime/ca-cert.pem
         DB_SECRET_ARN: !Ref DbSecretArn
 
 Resources:
@@ -125,6 +127,19 @@ Resources:
     Properties:
       FunctionName: !Sub "gql-${Env}-delete-user"
       Handler: handlers.deleteUser
+      CodeUri: .
+      Role: !GetAtt LambdaRole.Arn
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Target: es2022
+        EntryPoints: [src/users/handlers.ts]
+        External: ["@aws-sdk/*"]
+  SubscriptionReady:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "gql-${Env}-subscription-ready"
+      Handler: handlers.subscriptionReady
       CodeUri: .
       Role: !GetAtt LambdaRole.Arn
     Metadata:
