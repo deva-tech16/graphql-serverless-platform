@@ -22,7 +22,6 @@ Globals:
     MemorySize: 256
     Timeout: 15
     AutoPublishAlias: live
-    ReservedConcurrentExecutions: 4
     VpcConfig:
       SubnetIds: [!Ref SubnetA, !Ref SubnetB]
       SecurityGroupIds: [!Ref LambdaSgId]
