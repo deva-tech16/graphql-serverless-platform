@@ -1,0 +1,135 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: CRUD Lambda functions for the GraphQL platform
+
+Parameters:
+  Env:
+    Type: String
+    Default: dev
+  SubnetA:
+    Type: String
+  SubnetB:
+    Type: String
+  LambdaSgId:
+    Type: String
+  DbSecretArn:
+    Type: String
+
+Globals:
+  Function:
+    Runtime: nodejs22.x
+    Architectures: [arm64]
+    MemorySize: 256
+    Timeout: 15
+    AutoPublishAlias: live
+    VpcConfig:
+      SubnetIds: [!Ref SubnetA, !Ref SubnetB]
+      SecurityGroupIds: [!Ref LambdaSgId]
+    Environment:
+      Variables:
+        DB_SECRET_ARN: !Ref DbSecretArn
+
+Resources:
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: read-db-secret
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref DbSecretArn
+
+  InitDb:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "gql-${Env}-init-db"
+      Handler: handlers.initDb
+      CodeUri: .
+      Role: !GetAtt LambdaRole.Arn
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Target: es2022
+        EntryPoints: [src/users/handlers.ts]
+        External: ["@aws-sdk/*"]
+
+  CreateUser:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "gql-${Env}-create-user"
+      Handler: handlers.createUser
+      CodeUri: .
+      Role: !GetAtt LambdaRole.Arn
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Target: es2022
+        EntryPoints: [src/users/handlers.ts]
+        External: ["@aws-sdk/*"]
+
+  GetUser:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "gql-${Env}-get-user"
+      Handler: handlers.getUser
+      CodeUri: .
+      Role: !GetAtt LambdaRole.Arn
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Target: es2022
+        EntryPoints: [src/users/handlers.ts]
+        External: ["@aws-sdk/*"]
+
+  ListUsers:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "gql-${Env}-list-users"
+      Handler: handlers.listUsers
+      CodeUri: .
+      Role: !GetAtt LambdaRole.Arn
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Target: es2022
+        EntryPoints: [src/users/handlers.ts]
+        External: ["@aws-sdk/*"]
+
+  UpdateUser:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "gql-${Env}-update-user"
+      Handler: handlers.updateUser
+      CodeUri: .
+      Role: !GetAtt LambdaRole.Arn
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Target: es2022
+        EntryPoints: [src/users/handlers.ts]
+        External: ["@aws-sdk/*"]
+
+  DeleteUser:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "gql-${Env}-delete-user"
+      Handler: handlers.deleteUser
+      CodeUri: .
+      Role: !GetAtt LambdaRole.Arn
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Target: es2022
+        EntryPoints: [src/users/handlers.ts]
+        External: ["@aws-sdk/*"]
