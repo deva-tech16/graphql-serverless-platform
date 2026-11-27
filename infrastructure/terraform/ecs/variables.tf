@@ -22,3 +22,5 @@ variable "max_tasks" {
   type    = number
   default = 4
 }
+variable "db_secret_arn" { type = string }
+variable "access_token_arn" { type = string }

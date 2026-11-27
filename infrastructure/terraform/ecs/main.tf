@@ -6,6 +6,7 @@ resource "aws_lb" "this" {
   load_balancer_type = "application"
   security_groups    = [var.alb_sg_id]
   subnets            = var.app_subnet_ids
+  idle_timeout       = 120
 }
 
 resource "aws_lb_target_group" "gql" {
@@ -74,9 +75,11 @@ resource "aws_iam_role_policy" "task" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect   = "Allow"
-      Action   = "lambda:InvokeFunction"
-      Resource = "arn:aws:lambda:${var.region}:${data.aws_caller_identity.me.account_id}:function:${var.name}-*"
+      Effect = "Allow"
+      Action = "lambda:InvokeFunction"
+      Resource = [for operation in ["create-user", "get-user", "list-users", "update-user", "delete-user", "subscription-ready"] :
+        "arn:aws:lambda:${var.region}:${data.aws_caller_identity.me.account_id}:function:${var.name}-${operation}:live"
+      ]
     }]
   })
 }
@@ -108,6 +111,10 @@ resource "aws_ecs_task_definition" "gql" {
     image        = var.image
     essential    = true
     portMappings = [{ containerPort = 4000, protocol = "tcp" }]
+    secrets = [
+      { name = "GRAPHQL_TOKEN", valueFrom = var.access_token_arn },
+      { name = "DB_SECRET_JSON", valueFrom = var.db_secret_arn }
+    ]
     environment = [
       { name = "AWS_REGION", value = var.region },
       { name = "FUNCTION_PREFIX", value = var.name },
@@ -151,7 +158,11 @@ resource "aws_ecs_service" "gql" {
     container_port   = 4000
   }
 
-  depends_on = [aws_lb_listener.http]
+  lifecycle {
+    ignore_changes = [desired_count, task_definition]
+  }
+
+  depends_on = [aws_lb_listener.http, aws_iam_role_policy.secret_access, aws_iam_role_policy_attachment.execution]
 }
 
 resource "aws_appautoscaling_target" "ecs" {
@@ -190,4 +201,16 @@ resource "aws_appautoscaling_policy" "memory" {
       predefined_metric_type = "ECSServiceAverageMemoryUtilization"
     }
   }
+}
+resource "aws_iam_role_policy" "secret_access" {
+  name = "read-task-secrets"
+  role = aws_iam_role.execution.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = "secretsmanager:GetSecretValue"
+      Resource = [var.db_secret_arn, var.access_token_arn]
+    }]
+  })
 }

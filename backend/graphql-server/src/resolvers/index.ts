@@ -1,7 +1,5 @@
-import { PubSub } from "graphql-subscriptions";
+import { subscription } from "../services/events";
 import { callLambda } from "../services/lambda";
-
-const pubsub = new PubSub();
 
 export const resolvers = {
   Query: {
@@ -10,23 +8,16 @@ export const resolvers = {
       callLambda("get-user", { id: Number(args.id) }),
   },
   Mutation: {
-    createUser: async (_: unknown, args: { name: string; email: string }) => {
-      const user = await callLambda("create-user", args);
-      await pubsub.publish("USER_CREATED", { userCreated: user });
-      return user;
-    },
-    updateUser: async (_: unknown, args: { id: string; name?: string; email?: string }) => {
-      const user = await callLambda("update-user", { ...args, id: Number(args.id) });
-      if (user) await pubsub.publish("USER_UPDATED", { userUpdated: user });
-      return user;
-    },
+    createUser: (_: unknown, args: { name: string; email: string }) => callLambda("create-user", args),
+    updateUser: (_: unknown, args: { id: string; name?: string; email?: string }) =>
+      callLambda("update-user", { ...args, id: Number(args.id) }),
     deleteUser: async (_: unknown, args: { id: string }) => {
-      const r = await callLambda("delete-user", { id: Number(args.id) });
+      const r = await callLambda<{ deleted: boolean }>("delete-user", { id: Number(args.id) });
       return r.deleted;
     },
   },
   Subscription: {
-    userCreated: { subscribe: () => pubsub.asyncIterator(["USER_CREATED"]) },
-    userUpdated: { subscribe: () => pubsub.asyncIterator(["USER_UPDATED"]) },
+    userCreated: { subscribe: () => subscription("userCreated") },
+    userUpdated: { subscribe: () => subscription("userUpdated") },
   },
 };

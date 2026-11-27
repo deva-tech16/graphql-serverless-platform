@@ -14,6 +14,6 @@ terraform {
 provider "aws" {
   region = "us-east-1"
   default_tags {
-    tags = { Project = "graphql-serverless-platform", Env = "dev" }
+    tags = { Project = "graphql-serverless-platform", Env = var.environment }
   }
 }

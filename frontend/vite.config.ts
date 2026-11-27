@@ -7,5 +7,6 @@ export default defineConfig({
     // Remove this `apply` property to enable devtools for build as well
     apply: 'serve',
   },
+  server: { proxy: { "/graphql": { target: "http://localhost:4000", ws: true } } },
   plugins: [react()],
 })
